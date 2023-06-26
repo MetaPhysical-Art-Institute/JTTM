@@ -430,7 +430,7 @@ MonoBehaviour:
   m_text: "Congratulations!\n\nYou have successfully completed your journey to the
     Mothership! Thank you for playing and experiencing the psychedelic adventure
     of a lifetime.\n\nTo explore more mind-bending and captivating experiences, visit:\n\nOn-Chain
-    Leaderboard & JTTM Community dApp - https://themothership.io\n\nDiscover MAI's
+    Leaderboard & JTTM Community dApp - https://mothershipgame.com\n\nDiscover MAI's
     DAO and become a member to support local Montgomery, AL artist - https://metaphysicalart.io
     \n\n\nStay tuned for updates, expansions, and new levels in Journey to The Mothership!
     Thank you for being a part of this incredible journey.\n\nSee you on the cosmic
@@ -497,7 +497,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -172.733, y: -311.2307, z: -146.27838, w: -368.80826}
+  m_margin: {x: -172.733, y: -311.2307, z: -146.27838, w: 37.796585}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -646,6 +646,6 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 28, y: -186}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
