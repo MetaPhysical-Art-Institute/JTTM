@@ -19,7 +19,7 @@ public class StartScreenScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        contract = ThirdwebManager.Instance.SDK.GetContract("0xbcaF4F275C315D4d092A122e20fF23e56D6A0043");
+        contract = ThirdwebManager.Instance.SDK.GetContract("0x73EfadA5C7B523CFAF187dB4CF23cB5c6f63c5EE");
 
         ConnectedState.SetActive(false);
         DisconnectedState.SetActive(true);

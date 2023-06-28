@@ -15,7 +15,7 @@ public class TokenClaim : MonoBehaviour
         {
             isClaiming = true; // Set the claiming flag to true
 
-            Contract contract = ThirdwebManager.Instance.SDK.GetContract("0x22AF961438E8dD949B8c7190661E369fD6521B17");
+            Contract contract = ThirdwebManager.Instance.SDK.GetContract("0x7980602A62D0E133A318D193Ce495A55128a130A");
             await contract.ERC20.Claim("5");
 
             isClaimed = true; // Mark the claim as made
