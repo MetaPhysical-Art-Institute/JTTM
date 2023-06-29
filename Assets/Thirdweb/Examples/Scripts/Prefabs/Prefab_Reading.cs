@@ -17,14 +17,14 @@ public class Prefab_Reading : MonoBehaviour
     {
         try
         {
-            Contract contract = ThirdwebManager.Instance.SDK.GetContract(TOKEN_ERC20_CONTRACT);
+            Contract contract = ThirdwebManager.Instance.SDK.GetContract(DROP_ERC20_CONTRACT);
 
             Currency currencyInfo = await contract.ERC20.Get();
             Debugger.Instance.Log("[Fetch ERC20] Get", currencyInfo.ToString());
 
-            // CurrencyValue myBalance = await contract.ERC20.Balance();
+            CurrencyValue myBalance = await contract.ERC20.Balance();
 
-            // CurrencyValue currencyValue = await contract.ERC20.TotalSupply();
+            
         }
         catch (System.Exception e)
         {
