@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ScoreManager : MonoBehaviour
 {
@@ -6,6 +7,8 @@ public class ScoreManager : MonoBehaviour
 
     public int totalAIEnemies;
     private int enemiesKilled;
+
+    public Text enemyCountText; // Reference to the UI text element
 
     public TriggerObjectScript triggerObjectScript; // Reference to the TriggerObjectScript
 
@@ -29,12 +32,29 @@ public class ScoreManager : MonoBehaviour
         {
             triggerObjectScript.SetActive(false); // Disable the trigger at the start
         }
+
+        UpdateEnemyCountText();
     }
 
     public void IncrementKillCount()
     {
         enemiesKilled++;
+        UpdateEnemyCountText();
         CheckAllEnemiesKilled();
+    }
+
+    private void UpdateEnemyCountText()
+    {
+        int remainingEnemies = totalAIEnemies - enemiesKilled;
+
+        if (remainingEnemies > 0)
+        {
+            enemyCountText.text = "Enemies Remaining: " + remainingEnemies;
+        }
+        else
+        {
+            enemyCountText.text = "ATM Activated";
+        }
     }
 
     private void CheckAllEnemiesKilled()
