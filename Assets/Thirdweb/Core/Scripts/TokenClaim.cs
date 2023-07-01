@@ -9,27 +9,29 @@ public class TokenClaim : MonoBehaviour
 
     public GameObject nextSceneTrigger; // Reference to the game object with the trigger
 
-    public async void Claim()
+   public async void Claim()
+{
+    if (!isClaimed && !isClaiming)
     {
-        if (!isClaimed && !isClaiming)
+        isClaiming = true; // Set the claiming flag to true
+        ScoreManager.Instance.SetClaimingStatus(true); // Update ScoreManager claiming status
+
+        Contract contract = ThirdwebManager.Instance.SDK.GetContract("0x7980602A62D0E133A318D193Ce495A55128a130A");
+        await contract.ERC20.Claim("5");
+
+        isClaimed = true; // Mark the claim as made
+        DisableClaimButton(); // Disable the claim button
+
+        // Enable the next scene trigger game object
+        if (nextSceneTrigger != null)
         {
-            isClaiming = true; // Set the claiming flag to true
-
-            Contract contract = ThirdwebManager.Instance.SDK.GetContract("0x7980602A62D0E133A318D193Ce495A55128a130A");
-            await contract.ERC20.Claim("5");
-
-            isClaimed = true; // Mark the claim as made
-            DisableClaimButton(); // Disable the claim button
-
-            // Enable the next scene trigger game object
-            if (nextSceneTrigger != null)
-            {
-                nextSceneTrigger.SetActive(true);
-            }
-
-            isClaiming = false; // Reset the claiming flag
+            nextSceneTrigger.SetActive(true);
         }
+
+        ScoreManager.Instance.SetClaimingStatus(false); // Update ScoreManager claiming status
+        ScoreManager.Instance.IncrementKillCount(); // Increment kill count to update UI
     }
+}
 
     private void DisableClaimButton()
     {
