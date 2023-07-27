@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Threading.Tasks;
 using link.magic.unity.sdk;
 using link.magic.unity.sdk.Relayer;
@@ -25,7 +26,7 @@ namespace Thirdweb.Wallets
 
         public async Task<string> Connect(WalletConnection walletConnection, string rpc)
         {
-            _magic = new Magic(_magicLinkApiKey, new CustomNodeConfiguration(rpc, walletConnection.chainId));
+            _magic = new Magic(_magicLinkApiKey, new CustomNodeConfiguration(rpc, (int)walletConnection.chainId));
 
             await _magic.Auth.LoginWithEmailOtp(walletConnection.email);
             _web3 = new Web3(_magic.Provider);
@@ -81,6 +82,11 @@ namespace Thirdweb.Wallets
         public Task<bool> IsConnected()
         {
             return Task.FromResult(_web3 != null);
+        }
+
+        public Task<NetworkSwitchAction> PrepareForNetworkSwitch(BigInteger newChainId, string newRpc)
+        {
+            return Task.FromResult(NetworkSwitchAction.ContinueSwitch);
         }
     }
 }

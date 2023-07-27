@@ -18,8 +18,6 @@ namespace Thirdweb
 
         public override async Task<object> InterceptSendRequestAsync<T>(Func<RpcRequest, string, Task<T>> interceptedSendRequestAsync, RpcRequest request, string route = null)
         {
-            UnityEngine.Debug.Log($"{request.Method} Request Intercepted: {JsonConvert.SerializeObject(request.RawParameters)}");
-
             if (request.Method == "eth_accounts")
             {
                 var addy = await _thirdwebWallet.GetAddress();
@@ -32,6 +30,7 @@ namespace Thirdweb
                 switch (_thirdwebWallet.GetProvider())
                 {
                     case WalletProvider.LocalWallet:
+                    case WalletProvider.Paper:
                         var message = request.RawParameters[0].ToString();
                         return new EthereumMessageSigner().EncodeUTF8AndSign(message, new EthECKey(_thirdwebWallet.GetLocalAccount().PrivateKey));
                     case WalletProvider.SmartWallet:
@@ -47,7 +46,8 @@ namespace Thirdweb
                 switch (_thirdwebWallet.GetProvider())
                 {
                     case WalletProvider.LocalWallet:
-                        throw new Exception("Please use Wallet.SignTypedDataV4 instead when using Local Wallet as the signer.");
+                    case WalletProvider.Paper:
+                        throw new Exception("Please use Wallet.SignTypedDataV4 instead.");
                     case WalletProvider.SmartWallet:
                         return await signerWeb3.Client.SendRequestAsync<T>("eth_signTypedData_v4", null, request.RawParameters);
                     default:
@@ -65,8 +65,6 @@ namespace Thirdweb
             params object[] paramList
         )
         {
-            UnityEngine.Debug.Log($"{method} Request Intercepted: {JsonConvert.SerializeObject(paramList)}");
-
             if (method == "eth_accounts")
             {
                 var addy = await _thirdwebWallet.GetAddress();
@@ -79,6 +77,7 @@ namespace Thirdweb
                 switch (_thirdwebWallet.GetProvider())
                 {
                     case WalletProvider.LocalWallet:
+                    case WalletProvider.Paper:
                         var message = paramList[0].ToString();
                         return new EthereumMessageSigner().EncodeUTF8AndSign(message, new EthECKey(_thirdwebWallet.GetLocalAccount().PrivateKey));
                     case WalletProvider.SmartWallet:
@@ -94,7 +93,8 @@ namespace Thirdweb
                 switch (_thirdwebWallet.GetProvider())
                 {
                     case WalletProvider.LocalWallet:
-                        throw new Exception("Please use Wallet.SignTypedDataV4 instead when using Local Wallet as the signer.");
+                    case WalletProvider.Paper:
+                        throw new Exception("Please use Wallet.SignTypedDataV4 instead.");
                     case WalletProvider.SmartWallet:
                         return await signerWeb3.Client.SendRequestAsync<T>("eth_signTypedData_v4", null, paramList);
                     default:

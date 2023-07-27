@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Threading.Tasks;
 using MetaMask.NEthereum;
 using MetaMask.Unity;
@@ -22,21 +23,13 @@ namespace Thirdweb.Wallets
 
         public async Task<string> Connect(WalletConnection walletConnection, string rpc)
         {
-            if (MetaMaskUnity.Instance == null)
+            if (MetamaskUI.Instance == null)
             {
                 GameObject.Instantiate(ThirdwebManager.Instance.MetamaskPrefab);
-                await new WaitForSeconds(0.5f);
-                MetaMaskUnity.Instance.Initialize();
+                await new WaitForSeconds(1f);
             }
-
-            MetaMaskUnity.Instance.Connect();
-            bool connected = false;
-            MetaMaskUnity.Instance.Wallet.WalletAuthorized += (sender, e) =>
-            {
-                _web3 = MetaMaskUnity.Instance.Wallet.CreateWeb3();
-                connected = true;
-            };
-            await new WaitUntil(() => connected);
+            await MetamaskUI.Instance.Connect();
+            _web3 = MetaMaskUnity.Instance.CreateWeb3();
             return await GetAddress();
         }
 
@@ -54,7 +47,7 @@ namespace Thirdweb.Wallets
 
         public Task<string> GetAddress()
         {
-            var addy = MetaMaskUnity.Instance?.Wallet?.SelectedAddress;
+            var addy = MetaMaskUnity.Instance.Wallet.SelectedAddress;
             if (addy != null)
                 addy = addy.ToChecksumAddress();
             return Task.FromResult(addy);
@@ -88,6 +81,11 @@ namespace Thirdweb.Wallets
         public Task<bool> IsConnected()
         {
             return Task.FromResult(_web3 != null);
+        }
+
+        public Task<NetworkSwitchAction> PrepareForNetworkSwitch(BigInteger newChainId, string newRpc)
+        {
+            return Task.FromResult(NetworkSwitchAction.ContinueSwitch);
         }
     }
 }

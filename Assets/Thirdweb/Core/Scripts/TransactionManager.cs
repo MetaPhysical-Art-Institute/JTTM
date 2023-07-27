@@ -27,7 +27,7 @@ namespace Thirdweb
             {
                 if (!warned)
                 {
-                    Debug.LogWarning("Sending accountless query, make sure a wallet is connected if this was not intended.");
+                    Debug.Log("Sending accountless query, make sure a wallet is connected if this was not intended.");
                     warned = true;
                 }
             }
@@ -74,9 +74,13 @@ namespace Thirdweb
 
             if (!isGasless)
             {
-                if (ThirdwebManager.Instance.SDK.session.ActiveWallet.GetProvider() == WalletProvider.LocalWallet)
+                if (
+                    ThirdwebManager.Instance.SDK.session.ActiveWallet.GetSignerProvider() == WalletProvider.LocalWallet
+                    && ThirdwebManager.Instance.SDK.session.ActiveWallet.GetProvider() != WalletProvider.SmartWallet
+                )
                 {
-                    var transactionHandler = ThirdwebManager.Instance.SDK.session.Web3.Eth.GetContractTransactionHandler<TWFunction>();
+                    var web3 = await ThirdwebManager.Instance.SDK.session.ActiveWallet.GetSignerWeb3();
+                    var transactionHandler = web3.Eth.GetContractTransactionHandler<TWFunction>();
                     txHash = await transactionHandler.SendRequestAsync(contractAddress, functionMessage);
                 }
                 else
@@ -145,46 +149,46 @@ namespace Thirdweb
             var receiptPoller = new Web3(ThirdwebManager.Instance.SDK.session.RPC);
             return await receiptPoller.TransactionReceiptPolling.PollForReceiptAsync(txHash);
         }
+    }
 
-        [System.Serializable]
-        public struct RelayerResponse
+    [System.Serializable]
+    public struct RelayerResponse
+    {
+        [JsonProperty("status")]
+        public string status;
+
+        [JsonProperty("result")]
+        public string result;
+    }
+
+    [System.Serializable]
+    public struct RelayerResult
+    {
+        [JsonProperty("txHash")]
+        public string txHash;
+    }
+
+    [System.Serializable]
+    public struct RelayerRequest
+    {
+        [JsonProperty("request")]
+        public MinimalForwarder.ForwardRequest request;
+
+        [JsonProperty("signature")]
+        public string signature;
+
+        [JsonProperty("forwarderAddress")]
+        public string forwarderAddress;
+
+        [JsonProperty("type")]
+        public string type;
+
+        public RelayerRequest(ForwardRequest request, string signature, string forwarderAddress)
         {
-            [JsonProperty("status")]
-            public string status;
-
-            [JsonProperty("result")]
-            public string result;
-        }
-
-        [System.Serializable]
-        public struct RelayerResult
-        {
-            [JsonProperty("txHash")]
-            public string txHash;
-        }
-
-        [System.Serializable]
-        public struct RelayerRequest
-        {
-            [JsonProperty("request")]
-            public MinimalForwarder.ForwardRequest request;
-
-            [JsonProperty("signature")]
-            public string signature;
-
-            [JsonProperty("forwarderAddress")]
-            public string forwarderAddress;
-
-            [JsonProperty("type")]
-            public string type;
-
-            public RelayerRequest(ForwardRequest request, string signature, string forwarderAddress)
-            {
-                this.request = request;
-                this.signature = signature;
-                this.forwarderAddress = forwarderAddress;
-                this.type = "forward";
-            }
+            this.request = request;
+            this.signature = signature;
+            this.forwarderAddress = forwarderAddress;
+            this.type = "forward";
         }
     }
 }

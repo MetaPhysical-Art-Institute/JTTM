@@ -1,6 +1,7 @@
 using UnityEngine;
 using Thirdweb;
 using System.Collections.Generic;
+using System.Numerics;
 
 [System.Serializable]
 public class ChainData
@@ -19,11 +20,9 @@ public class ChainData
 
 public class ThirdwebManager : MonoBehaviour
 {
-    [Header("REQUIRED SETTINGS")]
     [Tooltip("The chain to initialize the SDK with")]
     public string chain = "goerli";
 
-    [Header("CHAIN DATA")]
     [Tooltip("Support any chain by adding it to this list from the inspector")]
     public List<ChainData> supportedChains = new List<ChainData>()
     {
@@ -43,17 +42,24 @@ public class ThirdwebManager : MonoBehaviour
         new ChainData("binance-testnet", "97", null),
     };
 
-    [Header("APP METADATA")]
-    public string appName = "Thirdweb Game";
-    public string appDescription = "Thirdweb Game Demo";
-    public string[] appIcons = new string[] { "https://thirdweb.com/favicon.ico" };
-    public string appUrl = "https://thirdweb.com";
+    [Tooltip("Thirdweb Client ID (https://thirdweb.com/create-api-key/). Used for default thirdweb services such as Storage and Account Abstraction.")]
+    public string clientId;
 
-    [Header("STORAGE OPTIONS")]
+    [Tooltip("The name of your app")]
+    public string appName = null;
+
+    [Tooltip("The description of your app")]
+    public string appDescription = null;
+
+    [Tooltip("Favicons for your app")]
+    public string[] appIcons = new string[] { };
+
+    [Tooltip("The url of your app")]
+    public string appUrl = null;
+
     [Tooltip("IPFS Gateway Override")]
-    public string storageIpfsGatewayUrl = "https://gateway.ipfscdn.io/ipfs/";
+    public string storageIpfsGatewayUrl = null;
 
-    [Header("OZ DEFENDER OPTIONS")]
     [Tooltip("Autotask URL")]
     public string relayerUrl = null;
 
@@ -66,16 +72,17 @@ public class ThirdwebManager : MonoBehaviour
     [Tooltip("Forwarder Version (Defaults to 0.0.1 if left empty)")]
     public string forwaderVersionOverride = null;
 
-    [Header("MAGIC LINK OPTIONS")]
     [Tooltip("Magic Link API Key (https://dashboard.magic.link)")]
     public string magicLinkApiKey = null;
 
-    [Header("SMART WALLET OPTIONS")]
+    [Tooltip("WalletConnect Project ID (https://cloud.walletconnect.com/app)")]
+    public string walletConnectProjectId = null;
+
+    [Tooltip("Paper Client ID (https://withpaper.com/dashboard)")]
+    public string paperClientId = null;
+
     [Tooltip("Factory Contract Address")]
     public string factoryAddress;
-
-    [Tooltip("Thirdweb API Key (https://thirdweb.com/dashboard/api-keys)")]
-    public string thirdwebApiKey;
 
     [Tooltip("Whether it should use a paymaster for gasless transactions or not")]
     public bool gasless;
@@ -89,12 +96,14 @@ public class ThirdwebManager : MonoBehaviour
     [Tooltip("Optional - If you want to use a custom entry point, you can provide the contract address here")]
     public string entryPointAddress;
 
-    [Header("NATIVE PREFABS (DANGER ZONE)")]
     [Tooltip("Instantiates the WalletConnect SDK for Native platforms.")]
     public GameObject WalletConnectPrefab;
 
     [Tooltip("Instantiates the Metamask SDK for Native platforms.")]
     public GameObject MetamaskPrefab;
+
+    [Tooltip("Instantiates the Paper SDK for Native platforms.")]
+    public GameObject PaperPrefab;
 
     public ThirdwebSDK SDK;
 
@@ -118,20 +127,17 @@ public class ThirdwebManager : MonoBehaviour
 
         // Inspector chain data dictionary.
 
-        ChainData currentChain = GetChainData(chain);
+        ChainData currentChain = supportedChains.Find(x => x.identifier == chain);
 
         // Chain ID must be provided on native platforms.
 
-        int chainId = -1;
+        BigInteger chainId = -1;
 
-        if (!Utils.IsWebGLBuild())
-        {
-            if (string.IsNullOrEmpty(currentChain.chainId))
-                throw new UnityException("You must provide a Chain ID on native platforms!");
+        if (string.IsNullOrEmpty(currentChain.chainId))
+            throw new UnityException("You must provide a Chain ID on native platforms!");
 
-            if (!int.TryParse(currentChain.chainId, out chainId))
-                throw new UnityException("The Chain ID must be a non-negative integer!");
-        }
+        if (!BigInteger.TryParse(currentChain.chainId, out chainId))
+            throw new UnityException("The Chain ID must be a non-negative integer!");
 
         // Must provide a proper chain identifier (https://thirdweb.com/dashboard/rpc) or RPC override.
 
@@ -152,7 +158,7 @@ public class ThirdwebManager : MonoBehaviour
                 chainOrRPC = currentChain.identifier;
         }
 
-        // Set up storage and gasless options (if an)
+        // Set up storage and gasless options (if any)
 
         var options = new ThirdwebSDK.Options();
 
@@ -175,48 +181,61 @@ public class ThirdwebManager : MonoBehaviour
         }
 
         // Set up wallet data
+
         options.wallet = new ThirdwebSDK.WalletOptions()
         {
-            appName = string.IsNullOrEmpty(appName) ? "Thirdweb Game" : appName,
-            appDescription = string.IsNullOrEmpty(appDescription) ? "Thirdweb Game Demo" : appDescription,
-            appIcons = appIcons.Length == 0 ? new string[] { "https://thirdweb.com/favicon.ico" } : appIcons,
+            appName = string.IsNullOrEmpty(appName) ? "thirdweb powered dApp" : appName,
+            appDescription = string.IsNullOrEmpty(appDescription) ? "thirdweb powered dApp" : appDescription,
+            appIcons = string.IsNullOrEmpty(appIcons[0]) ? new string[] { "https://thirdweb.com/favicon.ico" } : appIcons,
             appUrl = string.IsNullOrEmpty(appUrl) ? "https://thirdweb.com" : appUrl,
             magicLinkApiKey = string.IsNullOrEmpty(magicLinkApiKey) ? null : magicLinkApiKey,
+            walletConnectProjectId = string.IsNullOrEmpty(walletConnectProjectId) ? "145769e410f16970a79ff77b2d89a1e0" : walletConnectProjectId,
+            paperClientId = string.IsNullOrEmpty(paperClientId) ? null : paperClientId,
         };
 
-        options.smartWalletConfig =
-            string.IsNullOrEmpty(factoryAddress) || string.IsNullOrEmpty(thirdwebApiKey)
-                ? null
-                : new ThirdwebSDK.SmartWalletConfig()
-                {
-                    factoryAddress = factoryAddress,
-                    thirdwebApiKey = thirdwebApiKey,
-                    gasless = gasless,
-                    bundlerUrl = bundlerUrl,
-                    paymasterUrl = paymasterUrl,
-                    entryPointAddress = entryPointAddress
-                };
+        options.smartWalletConfig = string.IsNullOrEmpty(factoryAddress)
+            ? null
+            : new ThirdwebSDK.SmartWalletConfig()
+            {
+                factoryAddress = factoryAddress,
+                gasless = gasless,
+                bundlerUrl = string.IsNullOrEmpty(bundlerUrl) ? $"https://{currentChain.identifier}.bundler.thirdweb.com" : bundlerUrl,
+                paymasterUrl = string.IsNullOrEmpty(paymasterUrl) ? $"https://{currentChain.identifier}.bundler.thirdweb.com" : paymasterUrl,
+                entryPointAddress = string.IsNullOrEmpty(entryPointAddress) ? Thirdweb.AccountAbstraction.Constants.DEFAULT_ENTRYPOINT_ADDRESS : entryPointAddress,
+            };
+
+        // Set up Client ID
+
+        options.clientId = string.IsNullOrEmpty(clientId) ? null : clientId;
+
+        // Pass supported chains with replaced RPCs
+
+        var supportedChainData = new List<ThirdwebChainData>();
+        foreach (var chain in this.supportedChains)
+        {
+            string rpc = string.IsNullOrEmpty(chain.rpcOverride)
+                ? (
+                    string.IsNullOrEmpty(clientId)
+                        ? $"https://{chain.identifier}.rpc.thirdweb.com/339d65590ba0fa79e4c8be0af33d64eda709e13652acb02c6be63f5a1fbef9c3"
+                        : $"https://{chain.identifier}.rpc.thirdweb.com/{clientId}"
+                )
+                : chain.rpcOverride;
+
+            if (new System.Uri(rpc).Host.EndsWith(".thirdweb.com"))
+                rpc = rpc.AppendBundleIdQueryParam();
+            try
+            {
+                supportedChainData.Add(ThirdwebSession.FetchChainData(BigInteger.Parse(chain.chainId), rpc));
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Failed to fetch chain data for {chain.identifier} ({chain.chainId}) - {e}, skipping...");
+                continue;
+            }
+        }
+
+        options.supportedChains = supportedChainData.ToArray();
 
         SDK = new ThirdwebSDK(chainOrRPC, chainId, options);
-    }
-
-    public ChainData GetChainData(string chainIdentifier)
-    {
-        return supportedChains.Find(x => x.identifier == chainIdentifier);
-    }
-
-    public ChainData GetCurrentChainData()
-    {
-        return supportedChains.Find(x => x.identifier == chain);
-    }
-
-    public int GetCurrentChainID()
-    {
-        return int.Parse(GetCurrentChainData().chainId);
-    }
-
-    public string GetCurrentChainIdentifier()
-    {
-        return chain;
     }
 }

@@ -6,7 +6,6 @@ using UnityEngine.SceneManagement;
 
 public class StartScreenScript : MonoBehaviour
 {
-
     public GameObject ConnectedState;
     public GameObject DisconnectedState;
     public GameObject StartGameState;
@@ -26,30 +25,24 @@ public class StartScreenScript : MonoBehaviour
         StartGameState.SetActive(false);
         ClaimNFTState.SetActive(false); 
         LoadingState.SetActive(false);
-        
     }
 
     async public void ConnectWallet()
-
     {
-     address = await ThirdwebManager.Instance.SDK.wallet.GetAddress();
-       
+        address = await ThirdwebManager.Instance.SDK.wallet.GetAddress();
 
         ConnectedState.SetActive(true);
         DisconnectedState.SetActive(false);
 
         WalletNFTBalance();
-        
     }
 
-       public void DisconnectWallet()
-
+    public void DisconnectWallet()
     {
         ConnectedState.SetActive(false);
         DisconnectedState.SetActive(true);
-        
     }
-    
+
     async public void WalletNFTBalance()
     {
         var shrumezBalance = await contract.ERC1155.BalanceOf(address, "0");
@@ -69,28 +62,29 @@ public class StartScreenScript : MonoBehaviour
 
     async public void ClaimShrumez()
     {
-
         ClaimNFTState.SetActive(false);
         LoadingState.SetActive(true);
 
-        var claimResult = await contract.ERC1155.Claim("0",1);
+        var claimResult = await contract.ERC1155.Claim("0", 1);
 
         if (claimResult.isSuccessful())
         {
             LoadingState.SetActive(false);
             WalletNFTBalance();
-
         }
         else
         {
             Debug.Log("Failed to claim!");
         }
-
     }
-    
+
     public void StartGame()
     {
         SceneManager.LoadScene("Boston");
     }
-   
+
+    public void CashOut()
+    {
+        SceneManager.LoadScene("TransferScene");
+    }
 }

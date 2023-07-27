@@ -6,6 +6,7 @@ using UnityEngine;
 using Newtonsoft.Json;
 using TokenERC721Contract = Thirdweb.Contracts.TokenERC721.ContractDefinition;
 using DropERC721Contract = Thirdweb.Contracts.DropERC721.ContractDefinition;
+using ERC721AQueryable = Thirdweb.Contracts.ERC721AQueryableUpgradeable.ContractDefinition;
 
 namespace Thirdweb
 {
@@ -54,6 +55,8 @@ namespace Thirdweb
                     contractAddress,
                     new TokenERC721Contract.TokenURIFunction() { TokenId = BigInteger.Parse(tokenId) }
                 );
+
+                tokenURI.ReturnValue1 = tokenURI.ReturnValue1.Contains("0x{id}") ? tokenURI.ReturnValue1.Replace("0x{id}", tokenId) : tokenURI.ReturnValue1;
 
                 NFT nft = new NFT();
                 nft.owner = await OwnerOf(tokenId);
@@ -113,12 +116,12 @@ namespace Thirdweb
             else
             {
                 string owner = address == null ? await ThirdwebManager.Instance.SDK.wallet.GetAddress() : address;
+                var balanceOfOwner = int.Parse(await BalanceOf(owner));
+                List<NFT> ownedNfts = new List<NFT>();
 
                 try
                 {
                     // ERC721Enumerable
-                    var balanceOfOwner = int.Parse(await BalanceOf(owner));
-                    List<NFT> ownedNfts = new List<NFT>();
                     for (int i = 0; i < balanceOfOwner; i++)
                     {
                         var tokenId = await TransactionManager.ThirdwebRead<TokenERC721Contract.TokenOfOwnerByIndexFunction, TokenERC721Contract.TokenOfOwnerByIndexOutputDTO>(
@@ -129,19 +132,36 @@ namespace Thirdweb
                     }
                     return ownedNfts;
                 }
-                catch (System.Exception)
+                catch
                 {
-                    // ERC721 totalSupply
-                    var count = await TotalCount();
-                    List<NFT> ownedNfts = new List<NFT>();
-                    for (int i = 0; i < count; i++)
+                    // ERC721AQueryable
+                    try
                     {
-                        if (await OwnerOf(i.ToString()) == owner)
+                        var tokensOwned = await TransactionManager.ThirdwebRead<ERC721AQueryable.TokensOfOwnerFunction, ERC721AQueryable.TokensOfOwnerOutputDTO>(
+                            contractAddress,
+                            new ERC721AQueryable.TokensOfOwnerFunction() { Owner = owner }
+                        );
+                        for (int i = 0; i < tokensOwned.ReturnValue1.Count; i++)
                         {
-                            ownedNfts.Add(await Get(i.ToString()));
+                            ownedNfts.Add(await Get(tokensOwned.ReturnValue1[i].ToString()));
                         }
+                        return ownedNfts;
                     }
-                    return ownedNfts;
+                    catch
+                    {
+                        // ERC721Supply
+                        var count = await TotalCount();
+                        for (int i = 0; i < count; i++)
+                        {
+                            if (await OwnerOf(i.ToString()) == owner)
+                            {
+                                ownedNfts.Add(await Get(i.ToString()));
+                                if (ownedNfts.Count == balanceOfOwner)
+                                    break;
+                            }
+                        }
+                        return ownedNfts;
+                    }
                 }
             }
         }
@@ -167,7 +187,7 @@ namespace Thirdweb
                 }
                 catch (System.Exception)
                 {
-                    Debug.LogWarning("$Unable to find owner of {tokenId}, return address(0)");
+                    Debug.LogWarning($"Unable to find owner of {tokenId}, return address(0)");
                     return "0x0000000000000000000000000000000000000000";
                 }
             }
